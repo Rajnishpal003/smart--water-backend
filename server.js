@@ -23,10 +23,12 @@ const waterSchema = new mongoose.Schema({
 
 const Water = mongoose.model('Water', waterSchema);
 
+const FLOW_RATE_THRESHOLD = 100; // Example threshold value, adjust as needed
+
 // Routes
 app.get('/api/water', async (req, res) => {
   try {
-    const data = await Water.find();
+    const data = await Water.find().sort({ timestamp: -1 });
     res.send(data);
   } catch (error) {
     res.status(500).send('Error fetching data');
@@ -37,23 +39,18 @@ app.post('/api/water', async (req, res) => {
   try {
     const water = new Water(req.body);
     await water.save();
+
+    // Perform overflow check
+    if (water.flowRate > FLOW_RATE_THRESHOLD) {
+      console.log('Water is overflowing!');
+      // Add your notification logic here (e.g., send an email or SMS alert)
+    }
+
     res.send(water);
   } catch (error) {
     res.status(500).send('Error saving data');
   }
 });
-
-/* Handle saveData endpoint
-app.post('/api/saveData', async (req, res) => {
-  const { data } = req.body;
-  try {
-    await Water.insertMany(data);
-    res.status(200).send('Data saved successfully');
-  } catch (error) {
-    console.error('Error saving data:', error);
-    res.status(500).send('Error saving data');
-  }
-}); */
 
 // Log incoming requests
 app.use((req, res, next) => {
